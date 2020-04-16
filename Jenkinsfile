@@ -14,5 +14,16 @@ pipeline{
 				sh 'docker build . --tag=gauravg21/udacity_capstone:alpha'
 			}
 		}
+
+		stage('deploy in kubernetes')
+		{
+			steps{
+				withAWS(credentials: 'aws', region: 'us-west-2')
+				{
+					sh 'aws eks --region=us-west-2 update-kubeconfig --name devops_capstone'
+					sh 'kubectl apply -f eks-deployment.yml'
+				}
+			}
+		}
 	}
 }
