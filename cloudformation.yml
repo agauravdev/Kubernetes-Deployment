@@ -1,0 +1,167 @@
+Parameters:
+    
+    VPCCIDR:
+        Description: VPC CIDR
+        Type: String
+        Default: 10.0.0.0/16
+
+    Subnet1CIDR:
+        Description: Subnet 1 CIDR
+        Type: String
+        Default: 10.0.1.0/24
+
+    Subnet2CIDR:
+        Description: Subnet 2 CIDR
+        Type: String
+        Default: 10.0.2.0/24
+
+    WorkerNode:
+        Description: worker node instance
+        Type: String
+        Default: t2.small
+
+Resources:
+    VPC:
+        Type: AWS::EC2::VPC
+        Properties:
+            CidrBlock:  !Ref VPCCIDR
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
+            Tags:
+            -   Key: Name
+                Value: capstone-vpc
+
+    InternetGateway:
+        Type: "AWS::EC2::InternetGateway"
+
+    VPCGatewayAttachment:
+        Type: "AWS::EC2::VPCGatewayAttachment"
+        Properties:
+            InternetGatewayId: !Ref InternetGateway
+            VpcId: !Ref VPC
+
+    Subnet1:
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            CidrBlock: !Ref Subnet1CIDR
+            AvailabilityZone: !Select [ 0, !GetAZs '' ]
+
+
+    Subnet2:
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            CidrBlock: !Ref Subnet2CIDR
+            AvailabilityZone: !Select [ 1, !GetAZs '' ]
+
+
+    RouteTable:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId: !Ref VPC
+            Tags:
+            -   Key: Name
+                Value: Public Subnets
+            -   Key: Network
+                Value: Public
+
+    Route:
+        DependsOn: VPCGatewayAttachment
+        Type: AWS::EC2::Route
+        Properties:
+            RouteTableId: !Ref RouteTable
+            DestinationCidrBlock: 0.0.0.0/0
+            GatewayId: !Ref InternetGateway
+
+
+    Subnet1RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId: !Ref Subnet1
+            RouteTableId: !Ref RouteTable
+
+    Subnet2RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId: !Ref Subnet2
+            RouteTableId: !Ref RouteTable
+
+    SecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: security group
+            VpcId: !Ref VPC
+
+    KubernetesRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                -   Effect: "Allow"
+                    Principal:
+                        Service:
+                        -   "eks.amazonaws.com" 
+                    Action: 
+                    -   "sts:AssumeRole"
+
+            Path: "/"
+            ManagedPolicyArns: [
+                "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
+                "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+            ]
+
+    NodeRole:
+        Type: "AWS::IAM::Role"
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                -   Effect: Allow
+                    Principal:
+                        Service:
+                        -   ec2.amazonaws.com
+                    Action:
+                    -   "sts:AssumeRole"
+            ManagedPolicyArns:
+            -   "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+            -   "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+            -   "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+
+    EksCluster:
+        Type: AWS::EKS::Cluster
+        Properties:
+            Name: devops_capstone
+            Version: '1.14'
+            RoleArn: !GetAtt KubernetesRole.Arn
+            ResourcesVpcConfig:
+                SecurityGroupIds:
+                -   !Ref SecurityGroup
+                SubnetIds:
+                -   !Ref Subnet1
+                -   !Ref Subnet2
+
+    NodeGroup:
+        Type: 'AWS::EKS::Nodegroup'
+        DependsOn: EksCluster
+        Properties:
+            ClusterName: devops_capstone
+            NodeRole: !GetAtt NodeRole.Arn
+            InstanceTypes:
+            -   !Ref WorkerNode
+            RemoteAccess:
+                Ec2SshKey: capstone
+            Subnets:
+            -   !Ref Subnet1
+            -   !Ref Subnet2
+            ScalingConfig:
+                DesiredSize: 1
+                MinSize: 1
+                MaxSize: 1
+
+
+Outputs:
+    EKS: 
+        Description: EKS Cluster
+        Value: !Ref EksCluster
