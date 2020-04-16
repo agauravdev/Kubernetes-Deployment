@@ -1,5 +1,5 @@
-docker build . --tag=udacity_capstone
+docker build . --tag=gauravg21/udacity_capstone:$1
 
-docker image ls
+docker login 
 
-docker run -p 80:80 udacity_capstone
+docker push gauravg21/udacity_capstone:$1
