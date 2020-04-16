@@ -11,9 +11,9 @@ pipeline{
 		stage('Upload docker Image')
 		{
 			steps{
-				sh 'docker build . --tag=gauravg21/udacity_capstone:alpha'
-				sh 'docker login'
-				sh 'docker push gauravg21/udacity_capstone:alpha'
+				sh 'sudo docker build . --tag=gauravg21/udacity_capstone:alpha'
+				sh 'sudo docker login'
+				sh 'sudo docker push gauravg21/udacity_capstone:alpha'
 			}
 		}
 	}
