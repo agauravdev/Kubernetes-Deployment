@@ -12,6 +12,9 @@ My versions were as follows
 
 I used the templates provided by aws to form the cloudformation script and the kubernetes cluster. 
 
+My kubernetes cluster was running in one EC2 instance, and hence I did not know how to show the change in the EC2 instance. I did however put screenshots of the "kubectl get pods" commands to show that old pods were terminated and new pods were added to my kubernetes cluster.
+
+
 ## App Files
 
 	index.html
