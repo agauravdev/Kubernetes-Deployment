@@ -11,7 +11,12 @@ pipeline{
 		stage('Upload docker Image')
 		{
 			steps{
-				sh 'docker build . --tag=gauravg21/udacity_capstone:alpha'
+				sh 'docker build . --tag=gauravg21/udacity_capstone:cherry'
+				withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'passwd', usernameVariable: 'username')]) {
+					sh 'docker login -u $username -p $passwd'
+				}
+				docker push gauravg21/udacity_capstone:cherry
+
 			}
 		}
 
