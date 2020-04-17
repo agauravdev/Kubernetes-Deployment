@@ -41,4 +41,4 @@ I used the templates provided by aws to form the cloudformation script and the k
 	Jenkinsfile
 
 
-Endpoint URL Showing my final html page : [a99e352a9802511ea9d28020b73fc421-2036734422.us-west-2.elb.amazonaws.com](a99e352a9802511ea9d28020b73fc421-2036734422.us-west-2.elb.amazonaws.com)
+Endpoint URL Showing my final html page : [a99e352a9802511ea9d28020b73fc421-2036734422.us-west-2.elb.amazonaws.com](http://a99e352a9802511ea9d28020b73fc421-2036734422.us-west-2.elb.amazonaws.com/)
